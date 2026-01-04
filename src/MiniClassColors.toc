@@ -4,5 +4,6 @@
 ## Author: Verz
 ## Version: 1.0.0
 ## IconTexture: Interface\AddOns\MiniClassColors\icon.blp
+## X-Curse-Project-ID: 1418767
 
 MiniClassColors.lua
