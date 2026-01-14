@@ -3,7 +3,7 @@
 ## Notes: Applies class colors to target, focus, and target of target frames.
 ## Author: Verz
 ## Version: 1.0.0
-## IconTexture: Interface\AddOns\MiniClassColors\icon.blp
+## IconTexture: Interface\AddOns\MiniClassColors\Icon.blp
 ## X-Curse-Project-ID: 1418767
 
 MiniClassColors.lua
