@@ -5,11 +5,6 @@ local red = CreateColor(1, 0, 0)
 local reactionFriendlyStart = 5
 local reactionNeutral = 4
 
-local function Notify(msg)
-	local formatted = string.format("MiniClassColors - %s", msg)
-	print(formatted)
-end
-
 local function GetPlayerUnitColour(unit)
 	local _, className = UnitClass(unit)
 	local colour = RAID_CLASS_COLORS and RAID_CLASS_COLORS[className]
@@ -47,34 +42,62 @@ local function GetUnitColour(unit)
 	return UnitIsPlayer(unit) and GetPlayerUnitColour(unit) or GetNpcUnitColour(unit)
 end
 
-local function UpdateFrame(frame, unit)
-	if frame.unit ~= unit then
+local function ColourHealthBar(hb, unit)
+	if not hb or not unit then
 		return
 	end
 
 	local colour = GetUnitColour(unit)
 
-	frame:SetStatusBarDesaturated(true)
-	frame:SetStatusBarColor(colour.r, colour.g, colour.b)
+	hb:SetStatusBarDesaturated(true)
+	hb:SetStatusBarColor(colour.r, colour.g, colour.b)
+end
+
+local function OnUnitFrameHealthBarUpdate(statusBar, unit)
+	if not statusBar or not unit then
+		return
+	end
+
+	if statusBar.unit ~= unit then
+		return
+	end
+
+	ColourHealthBar(statusBar, unit)
+end
+
+local function OnHealthBarValueChanged(healthBar)
+	if not healthBar or not healthBar.unit then
+		return
+	end
+
+	ColourHealthBar(healthBar, healthBar.unit)
 end
 
 function Init()
 	if UnitFrameHealthBar_Update then
-		hooksecurefunc("UnitFrameHealthBar_Update", UpdateFrame)
-	else
-		Notify("Missing UnitFrameHealthBar_Update.")
+		-- retail hook
+		hooksecurefunc("UnitFrameHealthBar_Update", OnUnitFrameHealthBarUpdate)
 	end
 
-	if not RAID_CLASS_COLORS then
-		Notify("Missing RAID_CLASS_COLORS")
+	if UnitFrameHealthBar_OnValueChanged then
+		-- classic/tbc hook
+		hooksecurefunc("UnitFrameHealthBar_OnValueChanged", OnHealthBarValueChanged)
 	end
 
-	local playerFrame = PlayerFrame.healthbar
+	if PlayerFrame and PlayerFrame.healthbar then
+		-- initial colour
+		ColourHealthBar(PlayerFrame.healthbar, "player")
 
-	if playerFrame then
-		UpdateFrame(playerFrame, "player")
-	else
-		Notify("Missing PlayerFrame.healthbar.")
+		-- the player frame on classic and tbc doesn't go through the other hooks
+		hooksecurefunc(PlayerFrame.healthbar, "SetStatusBarColor", function(self)
+			if self.MiniClassColorsApplying then
+				return
+			end
+
+			self.MiniClassColorsApplying = true
+			ColourHealthBar(self, "player")
+			self.MiniClassColorsApplying = false
+		end)
 	end
 end
 
