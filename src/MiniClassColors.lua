@@ -39,7 +39,10 @@ local function GetNpcUnitColour(unit)
 end
 
 local function GetUnitColour(unit)
-	return UnitIsPlayer(unit) and GetPlayerUnitColour(unit) or GetNpcUnitColour(unit)
+	if UnitIsPlayer(unit) or unit == "pet" then
+		return GetPlayerUnitColour(unit == "pet" and "player" or unit)
+	end
+	return GetNpcUnitColour(unit)
 end
 
 local function ColourHealthBar(hb, unit)
@@ -73,6 +76,25 @@ local function OnHealthBarValueChanged(healthBar)
 	ColourHealthBar(healthBar, healthBar.unit)
 end
 
+local function HookFrameHealthBar(frame, unit)
+	if not frame or not frame.healthbar then
+		return
+	end
+
+	ColourHealthBar(frame.healthbar, unit)
+
+	-- classic/tbc frames bypass the global hooks, so intercept SetStatusBarColor directly
+	hooksecurefunc(frame.healthbar, "SetStatusBarColor", function(self)
+		if self.MiniClassColorsApplying then
+			return
+		end
+
+		self.MiniClassColorsApplying = true
+		ColourHealthBar(self, unit)
+		self.MiniClassColorsApplying = false
+	end)
+end
+
 function Init()
 	if UnitFrameHealthBar_Update then
 		-- retail hook
@@ -84,21 +106,8 @@ function Init()
 		hooksecurefunc("UnitFrameHealthBar_OnValueChanged", OnHealthBarValueChanged)
 	end
 
-	if PlayerFrame and PlayerFrame.healthbar then
-		-- initial colour
-		ColourHealthBar(PlayerFrame.healthbar, "player")
-
-		-- the player frame on classic and tbc doesn't go through the other hooks
-		hooksecurefunc(PlayerFrame.healthbar, "SetStatusBarColor", function(self)
-			if self.MiniClassColorsApplying then
-				return
-			end
-
-			self.MiniClassColorsApplying = true
-			ColourHealthBar(self, "player")
-			self.MiniClassColorsApplying = false
-		end)
-	end
+	HookFrameHealthBar(PlayerFrame, "player")
+	HookFrameHealthBar(PetFrame, "pet")
 end
 
 Init()
