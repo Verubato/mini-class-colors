@@ -2,7 +2,7 @@
 ## Title: MiniClassColors
 ## Notes: Applies class colors to target, focus, and target of target frames.
 ## Author: Verz
-## Version: 1.1.0
+## Version: 1.1.1
 ## IconTexture: Interface\AddOns\MiniClassColors\Icon.blp
 ## X-Curse-Project-ID: 1418767
 
