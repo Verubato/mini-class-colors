@@ -1,8 +1,8 @@
-## Interface: 120007, 50503, 40402, 38000, 30405, 30300, 20505, 11508
+## Interface: 120100, 120007, 50503, 40402, 38000, 30405, 30300, 20505, 11508
 ## Title: MiniClassColors
 ## Notes: Applies class colors to target, focus, and target of target frames.
 ## Author: Verz
-## Version: 1.1.1
+## Version: 1.1.2
 ## IconTexture: Interface\AddOns\MiniClassColors\Icon.blp
 ## X-Curse-Project-ID: 1418767
 
