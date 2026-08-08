@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.5
+
+Updated the addon icon to the new shared Mini style.
+
 ## 1.1.4
 
 Updated interface versions for the latest client builds.
