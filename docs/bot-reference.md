@@ -40,6 +40,9 @@ enable, remove to disable.
 - "My raid frames/nameplates are not class coloured": out of scope; this
   addon only touches the default player, pet, target, focus and
   target-of-target style frames.
+- "Lua error about secret keys in a dungeon": fixed in 1.1.6; retail hides
+  the class of units you are not allowed to identify, so older versions
+  errored on every target-of-target update in instanced combat.
 - "Colours conflict with my unit frame addon": another addon replacing or
   recolouring the same Blizzard bars will fight this one; disable one of
   them.

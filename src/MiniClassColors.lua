@@ -7,9 +7,22 @@ local reactionNeutral = 4
 
 local function GetPlayerUnitColour(unit)
 	local _, className = UnitClass(unit)
-	local colour = RAID_CLASS_COLORS and RAID_CLASS_COLORS[className]
 
-	return colour or green
+	-- type() is one of the few things allowed on a secret, so it stands in for
+	-- a plain nil check
+	if type(className) ~= "string" then
+		return green
+	end
+
+	-- retail hands back a secret class name for units we're not allowed to
+	-- identify, and a secret can't index a lua table. C_ClassColor takes one,
+	-- but it ignores any addon that recolours RAID_CLASS_COLORS, so keep the
+	-- table for every other unit.
+	if issecretvalue and issecretvalue(className) then
+		return C_ClassColor.GetClassColor(className) or green
+	end
+
+	return RAID_CLASS_COLORS and RAID_CLASS_COLORS[className] or green
 end
 
 local function GetNpcUnitColour(unit)
