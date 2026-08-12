@@ -1,6 +1,6 @@
 # MiniClassColors - bot reference
 
-Version 1.1.5. Interface versions: 120100, 120007, 50504, 40402, 38002,
+Version 1.1.6. Interface versions: 120100, 120007, 50504, 40402, 38002,
 38000, 30405, 30300, 20506, 11509 (retail plus the classic client lines).
 No saved variables.
 

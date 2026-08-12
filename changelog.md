@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.6
+
+Fixed an error in retail instanced combat, where the client hides a unit's
+class from addons.
+
 ## 1.1.5
 
 Updated the addon icon to the new shared Mini style.
