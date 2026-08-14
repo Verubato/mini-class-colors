@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.7
+
+Dropped old retail clients support.
+
 ## 1.1.6
 
 Fixed an error in retail instanced combat, where the client hides a unit's
