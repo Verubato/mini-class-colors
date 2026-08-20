@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.9
+
+Reduced CPU use by only repainting a health bar when its colour actually changes, rather than on every health tick.
+
 ## 1.1.8
 
 Added a Mini category so the addon groups with the other Mini addons in the addon list.
