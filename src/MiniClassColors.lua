@@ -5,6 +5,17 @@ local red = CreateColor(1, 0, 0)
 local reactionFriendlyStart = 5
 local reactionNeutral = 4
 
+local function IsSecret(value)
+	return issecretvalue ~= nil and issecretvalue(value)
+end
+
+---Whether two colour channels land on the same 8-bit value. The widget keeps its colour as a
+---float and the getter can quantise on the way back out, so neither an exact compare nor a
+---fixed epsilon is dependable. The screen only shows 8 bits either way.
+local function SameChannel(a, b)
+	return math.floor(a * 255 + 0.5) == math.floor(b * 255 + 0.5)
+end
+
 local function GetPlayerUnitColour(unit)
 	local _, className = UnitClass(unit)
 
@@ -65,8 +76,36 @@ local function ColourHealthBar(hb, unit)
 
 	local colour = GetUnitColour(unit)
 
+	-- The value-changed hook runs on every health tick, so this is the addon's hot path. The
+	-- colour is still worked out each time - a mob's reaction can turn, and a frame can swap
+	-- unit - but the writes below are skipped when the bar already shows the answer.
+	--
+	-- Read back off the bar rather than remembered, so a repaint by blizzard or another addon
+	-- is still corrected. Skipped entirely until this addon has painted the bar once, or the
+	-- first pass on a bar blizzard already drew green would never desaturate it.
+	--
+	-- Secret colours are never compared: arithmetic on a secret errors, so units the client
+	-- will not let an addon identify take the write every time.
+	if hb.MiniClassColorsPainted and not IsSecret(colour.r) then
+		local r, g, b, a = hb:GetStatusBarColor()
+
+		if
+			r
+			and not IsSecret(r)
+			and a == 1
+			and SameChannel(r, colour.r)
+			and SameChannel(g, colour.g)
+			and SameChannel(b, colour.b)
+		then
+			return
+		end
+	end
+
+	-- Re-asserted on every write rather than once per bar: a texture swap takes desaturation
+	-- with it, and writes are rare now.
 	hb:SetStatusBarDesaturated(true)
 	hb:SetStatusBarColor(colour.r, colour.g, colour.b)
+	hb.MiniClassColorsPainted = true
 end
 
 local function OnUnitFrameHealthBarUpdate(statusBar, unit)
@@ -108,7 +147,7 @@ local function HookFrameHealthBar(frame, unit)
 	end)
 end
 
-function Init()
+local function Init()
 	if UnitFrameHealthBar_Update then
 		-- retail hook
 		hooksecurefunc("UnitFrameHealthBar_Update", OnUnitFrameHealthBarUpdate)
