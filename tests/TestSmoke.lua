@@ -44,7 +44,8 @@ smoke.Run("MiniClassColors", {
 		fw.eq(context.Addon.Framework.CustomStyling, true, "custom styling on")
 		fw.eq(context.Addon.Framework.CustomStylingOverrides.Button, false, "stock buttons")
 		fw.truthy(HasText("Applies class colouring to the target, focus, and target of target frames."), "the subtitle under the panel title")
-		fw.truthy(HasDivider("SETTINGS"), "the settings section rule under the header")
+		-- The panel has no controls, so it carries no section rule either.
+		fw.falsy(HasDivider("SETTINGS"), "no settings section rule under the header")
 
 		-- MiniAuras has owned /mcc since it was called MiniCC, so claiming it here would
 		-- take the command away from whichever addon loaded second.
