@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.10
+
+- UI improvements.
+- Added a settings page.
+- Changed the short slash command to /mcolors.
+
 ## 1.1.9
 
 Reduced CPU use by only repainting a health bar when its colour actually changes, rather than on every health tick.

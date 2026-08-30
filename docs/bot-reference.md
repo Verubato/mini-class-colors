@@ -1,6 +1,6 @@
 # MiniClassColors - bot reference
 
-Version 1.1.9. Interface versions: 120100, 50504, 40402, 38002, 38000,
+Version 1.1.10. Interface versions: 120100, 50504, 40402, 38002, 38000,
 30405, 30300, 20506, 11509 (retail plus the classic client lines).
 No saved variables.
 
@@ -30,8 +30,10 @@ the player frame and pet frame which are hooked directly.
 
 ## Settings
 
-None. No options panel, no slash commands, no saved variables. Install to
-enable, remove to disable.
+Open with a slash command or Options -> AddOns -> MiniClassColors. Slash
+commands: /miniclasscolors, /miniclasscolours, /mcolors. The panel only
+describes what the addon does; there is nothing to configure. No saved
+variables.
 
 ## Troubleshooting
 
