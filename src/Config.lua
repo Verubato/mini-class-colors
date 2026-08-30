@@ -19,7 +19,7 @@ mini:WaitForAddonLoad(function()
 	mini:PanelHeader({
 		Parent = panel,
 		Lines = {
-			"Applies class colouring to the target, focus, and target of target frames.",
+			"Applies class colouring to the player, target, focus, and target of target frames.",
 			"This addon has no settings, it simply works out of the box.",
 		},
 	})
