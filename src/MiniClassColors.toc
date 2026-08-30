@@ -7,4 +7,6 @@
 ## IconTexture: Interface\AddOns\MiniClassColors\Icon.blp
 ## X-Curse-Project-ID: 1418767
 
+Libs\MiniFramework\MiniFramework.xml
+Config.lua
 MiniClassColors.lua
