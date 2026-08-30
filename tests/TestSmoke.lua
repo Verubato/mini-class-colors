@@ -45,5 +45,11 @@ smoke.Run("MiniClassColors", {
 		fw.eq(context.Addon.Framework.CustomStylingOverrides.Button, false, "stock buttons")
 		fw.truthy(HasText("Applies class colouring to the target, focus, and target of target frames."), "the subtitle under the panel title")
 		fw.truthy(HasDivider("SETTINGS"), "the settings section rule under the header")
+
+		-- MiniAuras has owned /mcc since it was called MiniCC, so claiming it here would
+		-- take the command away from whichever addon loaded second.
+		for i = 1, 4 do
+			fw.truthy(_G["SLASH_MINICLASSCOLORS" .. i] ~= "/mcc", "alias " .. i .. " is not /mcc")
+		end
 	end,
 })

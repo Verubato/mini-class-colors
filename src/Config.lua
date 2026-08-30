@@ -25,6 +25,6 @@ mini:WaitForAddonLoad(function()
 	mini:RegisterSlashCommand(category, panel, {
 		"/miniclasscolors",
 		"/miniclasscolours",
-		"/mcc",
+		"/mcolors",
 	})
 end)
