@@ -5,6 +5,21 @@ local red = CreateColor(1, 0, 0)
 local reactionFriendlyStart = 5
 local reactionNeutral = 4
 
+local generation = 1
+local listener
+local paintedBars = {}
+local identityEvents = {
+	"PLAYER_ENTERING_WORLD",
+	"PLAYER_TARGET_CHANGED",
+	"PLAYER_FOCUS_CHANGED",
+	"GROUP_ROSTER_UPDATE",
+	"UNIT_TARGET",
+	"UNIT_PET",
+	"UNIT_ENTERED_VEHICLE",
+	"UNIT_EXITED_VEHICLE",
+}
+local EnsureColourHook
+
 local function IsSecret(value)
 	return issecretvalue ~= nil and issecretvalue(value)
 end
@@ -22,7 +37,7 @@ local function GetPlayerUnitColour(unit)
 	-- type() is one of the few things allowed on a secret, so it stands in for
 	-- a plain nil check
 	if type(className) ~= "string" then
-		return green
+		return green, false
 	end
 
 	-- retail hands back a secret class name for units we're not allowed to
@@ -30,36 +45,48 @@ local function GetPlayerUnitColour(unit)
 	-- but it ignores any addon that recolours RAID_CLASS_COLORS, so keep the
 	-- table for every other unit.
 	if issecretvalue and issecretvalue(className) then
-		return C_ClassColor.GetClassColor(className) or green
+		local colour = C_ClassColor.GetClassColor(className)
+
+		if colour then
+			return colour, true
+		end
+
+		return green, false
 	end
 
-	return RAID_CLASS_COLORS and RAID_CLASS_COLORS[className] or green
+	local colour = RAID_CLASS_COLORS and RAID_CLASS_COLORS[className]
+
+	if colour then
+		return colour, true
+	end
+
+	return green, false
 end
 
 local function GetNpcUnitColour(unit)
 	-- if we're in pvp mode and the enemy faction flagged the mob
 	-- then return a grey colour
 	if UnitIsTapDenied(unit) then
-		return grey
+		return grey, false
 	end
 
 	local reaction = UnitReaction("player", unit)
 
 	if not reaction then
 		-- not sure why this happens sometimes
-		return yellow
+		return yellow, false
 	end
 
 	if reaction >= reactionFriendlyStart then
-		return green
+		return green, false
 	end
 
 	if reaction == reactionNeutral then
-		return yellow
+		return yellow, false
 	end
 
 	-- unfriendly/hostile/hated
-	return red
+	return red, false
 end
 
 local function GetUnitColour(unit)
@@ -74,18 +101,15 @@ local function ColourHealthBar(hb, unit)
 		return
 	end
 
-	local colour = GetUnitColour(unit)
+	-- a reaction colour can turn without an event, so only a class colour is held between them
+	if hb.MiniClassColorsGeneration == generation and hb.MiniClassColorsGenerationUnit == unit then
+		return
+	end
 
-	-- The value-changed hook runs on every health tick, so this is the addon's hot path. The
-	-- colour is still worked out each time - a mob's reaction can turn, and a frame can swap
-	-- unit - but the writes below are skipped when the bar already shows the answer.
-	--
-	-- Read back off the bar rather than remembered, so a repaint by blizzard or another addon
-	-- is still corrected. Skipped entirely until this addon has painted the bar once, or the
-	-- first pass on a bar blizzard already drew green would never desaturate it.
-	--
-	-- Secret colours are never compared: arithmetic on a secret errors, so units the client
-	-- will not let an addon identify take the write every time.
+	local colour, fromClass = GetUnitColour(unit)
+
+	-- Read back off the bar rather than remembered, so a foreign repaint is still corrected.
+	-- Arithmetic on a secret errors.
 	if hb.MiniClassColorsPainted and not IsSecret(colour.r) then
 		local r, g, b, a = hb:GetStatusBarColor()
 
@@ -97,15 +121,43 @@ local function ColourHealthBar(hb, unit)
 			and SameChannel(g, colour.g)
 			and SameChannel(b, colour.b)
 		then
+			hb.MiniClassColorsGeneration = fromClass and generation or nil
+			hb.MiniClassColorsGenerationUnit = fromClass and unit or nil
 			return
 		end
 	end
 
 	-- Re-asserted on every write rather than once per bar: a texture swap takes desaturation
 	-- with it, and writes are rare now.
+	hb.MiniClassColorsApplying = true
 	hb:SetStatusBarDesaturated(true)
 	hb:SetStatusBarColor(colour.r, colour.g, colour.b)
+	hb.MiniClassColorsApplying = false
 	hb.MiniClassColorsPainted = true
+	hb.MiniClassColorsGeneration = fromClass and generation or nil
+	hb.MiniClassColorsGenerationUnit = fromClass and unit or nil
+	EnsureColourHook(hb)
+end
+
+EnsureColourHook = function(hb)
+	if hb.MiniClassColorsHooked then
+		return
+	end
+
+	hb.MiniClassColorsHooked = true
+
+	-- blizzard's unit frames are permanent and around twenty, so a plain array is bounded
+	paintedBars[#paintedBars + 1] = hb
+
+	hooksecurefunc(hb, "SetStatusBarColor", function(self)
+		if self.MiniClassColorsApplying then
+			return
+		end
+
+		self.MiniClassColorsGeneration = nil
+		self.MiniClassColorsGenerationUnit = nil
+		ColourHealthBar(self, self.unit)
+	end)
 end
 
 local function OnUnitFrameHealthBarUpdate(statusBar, unit)
@@ -133,18 +185,28 @@ local function HookFrameHealthBar(frame, unit)
 		return
 	end
 
+	EnsureColourHook(frame.healthbar)
 	ColourHealthBar(frame.healthbar, unit)
+end
 
-	-- classic/tbc frames bypass the global hooks, so intercept SetStatusBarColor directly
-	hooksecurefunc(frame.healthbar, "SetStatusBarColor", function(self)
-		if self.MiniClassColorsApplying then
-			return
-		end
+local function OnIdentityEvent(_, event, arg1)
+	-- in a raid this fires for every member, and none of those move a bar here
+	if event == "UNIT_TARGET" and arg1 ~= "target" and arg1 ~= "focus" then
+		return
+	end
 
-		self.MiniClassColorsApplying = true
-		ColourHealthBar(self, unit)
-		self.MiniClassColorsApplying = false
-	end)
+	-- likewise every group member's pet, when only the player's own pet bar takes a class colour
+	if event == "UNIT_PET" and arg1 ~= "player" then
+		return
+	end
+
+	generation = generation + 1
+
+	-- blizzard registered these events before us and has already run its update, so the bar
+	-- only repaints if this does it
+	for _, hb in ipairs(paintedBars) do
+		ColourHealthBar(hb, hb.unit)
+	end
 end
 
 local function Init()
@@ -160,6 +222,13 @@ local function Init()
 
 	HookFrameHealthBar(PlayerFrame, "player")
 	HookFrameHealthBar(PetFrame, "pet")
+
+	listener = CreateFrame("Frame")
+	listener:SetScript("OnEvent", OnIdentityEvent)
+
+	for _, event in ipairs(identityEvents) do
+		listener:RegisterEvent(event)
+	end
 end
 
 Init()
