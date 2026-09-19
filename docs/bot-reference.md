@@ -1,6 +1,6 @@
 # MiniClassColors - bot reference
 
-Version 1.1.10. Interface versions: 120100, 50504, 40402, 38002, 38000,
+Version 1.1.10. Interface versions: 120100, 16001, 50504, 40402, 38002, 38000,
 30405, 30300, 20506, 11509 (retail plus the classic client lines).
 No saved variables.
 
@@ -8,8 +8,9 @@ No saved variables.
 
 Colours the health bars of the default Blizzard unit frames by class for
 players, and by reaction for NPCs. Covers the frames Blizzard updates
-through its shared health bar code (target, focus, target-of-target), plus
-the player frame and pet frame which are hooked directly.
+through its shared health bar code (target, focus, target-of-target, and the
+traditional party frames), plus the player frame and pet frame which are
+hooked directly.
 
 ## Colour rules
 
@@ -23,10 +24,12 @@ the player frame and pet frame which are hooked directly.
 
 - Retail: hooks UnitFrameHealthBar_Update. Classic/TBC: hooks
   UnitFrameHealthBar_OnValueChanged so colours survive health updates.
-- Player and pet frames get a direct SetStatusBarColor hook so other code
-  cannot overwrite the colour.
-- Only default Blizzard unit frames are affected; raid frames, nameplates,
-  and unit frame replacement addons are untouched.
+- Every bar the addon paints gets a direct SetStatusBarColor hook so other
+  code cannot overwrite the colour.
+- A class colour is worked out once and then held until an event says the
+  unit behind the frame changed. Reaction colours are worked out every time.
+- Only default Blizzard unit frames are affected; compact raid frames,
+  nameplates, and unit frame replacement addons are untouched.
 
 ## Settings
 
@@ -40,8 +43,8 @@ variables.
 - "A mob's bar is grey": that mob is tapped by another player or the enemy
   faction; grey is intentional.
 - "My raid frames/nameplates are not class coloured": out of scope; this
-  addon only touches the default player, pet, target, focus and
-  target-of-target style frames.
+  addon only touches the default player, pet, target, focus,
+  target-of-target and party style frames.
 - "Lua error about secret keys in a dungeon": fixed in 1.1.6; retail hides
   the class of units you are not allowed to identify, so older versions
   errored on every target-of-target update in instanced combat.
